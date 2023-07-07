@@ -1,0 +1,75 @@
+name: Main
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  commit-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Commit Lint
+        uses: wagoid/commitlint-github-action@v5
+  code-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v3.6.0
+        with:
+          node-version: '20'
+      - uses: actions/cache@v3
+        with:
+          path: '**/node_modules'
+          key: ${{ runner.os }}-node-16-modules-${{ hashFiles('**/yarn.lock') }}
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+      - name: Format
+        run: yarn run format
+      - name: Lint
+        run: yarn run lint
+
+  release:
+    if: "!contains(github.event.commits[0].message, '[skip ci]')"
+    needs: [commit-lint, code-lint, test-with-node]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v3.6.0
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+      - name: Build
+        run: yarn build
+      - name: Disable protection temporary
+        uses: actions/github-script@v6.4.1
+        with:
+          github-token: '${{ secrets.GASTROBOT_TOKEN}}'
+          script: |
+            await github.rest.repos.deleteAdminBranchProtection({
+              repo: '${{ github.event.repository.name }}',
+              owner: '${{ github.repository_owner }}',
+              branch: 'main',
+            });
+      - run: npx semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GASTROBOT_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Restore protection
+        uses: actions/github-script@v6.4.1
+        if: always()
+        with:
+          github-token: '${{ secrets.GASTROBOT_TOKEN}}'
+          script: |
+            await github.rest.repos.setAdminBranchProtection({
+              repo: '${{ github.event.repository.name }}',
+              owner: '${{ github.repository_owner }}',
+              branch: 'main',
+            });
