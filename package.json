@@ -1,0 +1,57 @@
+{
+  "name": "graphql-transform-scalars",
+  "version": "0.0.0",
+  "description": "Graphql response transformer for custom scalars",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "yarn clean && yarn compile",
+    "clean": "rimraf ./dist",
+    "compile": "tsc",
+    "tsc:check": "tsc --noEmit",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix",
+    "format": "prettier **/*.{ts,json} --check",
+    "format:fix": "prettier **/*.{ts,json} --write",
+    "prepare": "husky install"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gastromatic/graphql-transform-scalars.git"
+  },
+  "keywords": [
+    "javascript",
+    "typescript",
+    "graphql",
+    "scalars",
+    "customer scalars",
+    "graphql-transform-scalars"
+  ],
+  "author": "Patrick Klein",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/gastromatic/graphql-transform-scalars/issues"
+  },
+  "homepage": "https://github.com/gastromatic/graphql-transform-scalars#readme",
+  "peerDependencies": {
+    "graphql": ">=15"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "17.6.6",
+    "@commitlint/config-conventional": "17.6.6",
+    "@semantic-release/changelog": "6.0.3",
+    "@semantic-release/git": "10.0.1",
+    "@typescript-eslint/eslint-plugin": "5.60.0",
+    "@typescript-eslint/parser": "5.60.0",
+    "eslint": "8.43.0",
+    "fast-check": "3.10.0",
+    "graphql": "16.7.1",
+    "husky": "8.0.3",
+    "lint-staged": "13.2.2",
+    "prettier": "2.8.8",
+    "rimraf": "5.0.1",
+    "ts-jest": "29.1.0",
+    "ts-node": "10.9.1",
+    "typescript": "5.1.3"
+  }
+}
