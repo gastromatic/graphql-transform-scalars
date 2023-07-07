@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/gastromatic/graphql-transform-scalars/compare/v1.0.0...v1.1.0) (2023-07-07)
+
+
+### Features
+
+* add support for unions and interfaces ([62c3ec3](https://github.com/gastromatic/graphql-transform-scalars/commit/62c3ec303b1479af3b4306a5ec6f0ac9151d3c02))
+
 # 1.0.0 (2023-07-07)
 
 
