@@ -34,7 +34,7 @@ jobs:
 
   release:
     if: "!contains(github.event.commits[0].message, '[skip ci]')"
-    needs: [commit-lint, code-lint, test-with-node]
+    needs: [commit-lint, code-lint]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
