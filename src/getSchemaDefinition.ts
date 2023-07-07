@@ -6,6 +6,24 @@ export type FieldTypeDefinition = {
   isNonNull?: boolean;
 };
 
+export type ObjectDefinition = {
+  kind: 'ObjectTypeDefinition';
+  fields: Map<string, FieldTypeDefinition>;
+};
+
+export type InterfaceDefinition = {
+  kind: 'InterfaceTypeDefinition';
+  fields: Map<string, FieldTypeDefinition>;
+  types: string[];
+};
+
+export type UnionDefinition = {
+  kind: 'UnionTypeDefinition';
+  types: string[];
+};
+
+export type TypeDefinition = ObjectDefinition | InterfaceDefinition | UnionDefinition;
+
 function getTypeDefinition(
   fieldType: NamedTypeNode | ListTypeNode | NonNullTypeNode,
 ): FieldTypeDefinition {
@@ -31,10 +49,12 @@ export function getSchemaDefinition(schema: string) {
   const rootNode = parse(schema);
   const queries = new Map<string, FieldTypeDefinition>();
   const mutations = new Map<string, FieldTypeDefinition>();
-  const objects = new Map<string, Map<string, FieldTypeDefinition>>();
+  const typeDefinitions = new Map<string, TypeDefinition>();
+
+  const interfaceMap = new Map<string, string[]>();
 
   for (const n of rootNode.definitions) {
-    if (n.kind === 'ObjectTypeDefinition') {
+    if (n.kind === 'ObjectTypeDefinition' || n.kind === 'InterfaceTypeDefinition') {
       if (n.name.value === 'Query') {
         for (const field of n.fields || []) {
           queries.set(field.name.value, getTypeDefinition(field.type));
@@ -49,8 +69,33 @@ export function getSchemaDefinition(schema: string) {
       for (const field of n.fields || []) {
         fields.set(field.name.value, getTypeDefinition(field.type));
       }
-      objects.set(n.name.value, fields);
+      if (n.kind === 'InterfaceTypeDefinition') {
+        typeDefinitions.set(n.name.value, { kind: n.kind, fields, types: [] });
+      } else {
+        typeDefinitions.set(n.name.value, { kind: n.kind, fields });
+      }
+      for (const interfaceDef of n.interfaces || []) {
+        interfaceMap.set(interfaceDef.name.value, [
+          ...(interfaceMap.get(interfaceDef.name.value) || []),
+          n.name.value,
+        ]);
+      }
+    }
+    if (n.kind === 'UnionTypeDefinition') {
+      typeDefinitions.set(n.name.value, {
+        kind: n.kind,
+        types: (n.types || []).map((type) => type.name.value),
+      });
     }
   }
-  return { queries, mutations, objects };
+
+  for (const [interfaceName, types] of interfaceMap.entries()) {
+    const interfaceDef = typeDefinitions.get(interfaceName);
+    if (!interfaceDef || interfaceDef.kind !== 'InterfaceTypeDefinition') {
+      throw new Error(`Interface ${interfaceName} not found`);
+    }
+    interfaceDef.types.push(...types);
+  }
+
+  return { queries, mutations, typeDefinitions };
 }
