@@ -1,4 +1,4 @@
-import { FieldTypeDefinition, getSchemaDefinition } from './getSchemaDefinition';
+import { FieldTypeDefinition, getSchemaDefinition, TypeDefinition } from './getSchemaDefinition';
 
 type StringTransformerFunction = (value: string) => any;
 type BooleanTransformerFunction = (value: boolean) => any;
@@ -15,14 +15,44 @@ export class TransformCustomScalars {
 
   private readonly mutations: Map<string, FieldTypeDefinition>;
 
-  private readonly objects: Map<string, Map<string, FieldTypeDefinition>>;
+  private readonly typeDefinitions: Map<string, TypeDefinition>;
 
   constructor(schema: string, transformDefinitions: Record<string, TransformFunctionType>) {
     this.transformDefinitions = transformDefinitions;
     const schemaDefinition = getSchemaDefinition(schema);
-    this.objects = schemaDefinition.objects;
     this.queries = schemaDefinition.queries;
     this.mutations = schemaDefinition.mutations;
+    this.typeDefinitions = schemaDefinition.typeDefinitions;
+  }
+
+  private getFields(
+    obj: any,
+    typeDefinition: TypeDefinition,
+    type: string,
+  ): Map<string, FieldTypeDefinition> {
+    const typeName = obj.__typename;
+    if (typeDefinition.kind === 'UnionTypeDefinition') {
+      if (!typeName) {
+        throw new Error('Union type does not have __typename');
+      }
+      const unionType = typeDefinition.types.find((t) => t === typeName);
+      if (!unionType) {
+        throw new Error(`Type ${typeName} not found in union ${type}`);
+      }
+      const unionTypeDef = this.typeDefinitions.get(unionType);
+      if (!unionTypeDef || unionTypeDef.kind === 'UnionTypeDefinition') {
+        throw new Error(`Type ${typeName} not found in union ${type}`);
+      }
+      return unionTypeDef.fields;
+    }
+    if (typeDefinition.kind === 'InterfaceTypeDefinition' && typeName) {
+      const interfaceTypeDef = this.typeDefinitions.get(typeName);
+      if (!interfaceTypeDef || interfaceTypeDef.kind !== 'ObjectTypeDefinition') {
+        throw new Error(`Type ${typeName} not found in interface ${type}`);
+      }
+      return interfaceTypeDef.fields;
+    }
+    return typeDefinition.fields;
   }
 
   private transform(
@@ -34,15 +64,21 @@ export class TransformCustomScalars {
         return result.map((item) => this.transform(item, type));
       }
       if (typeof result === 'object') {
-        const fieldDefinitions = this.objects.get(type);
+        const fieldDefinitions = this.typeDefinitions.get(type);
         if (!fieldDefinitions) {
-          return result;
+          throw new Error(`Type ${type} not found`);
         }
+        const fields = this.getFields(result, fieldDefinitions, type);
         for (const [key, value] of Object.entries(result)) {
-          const definition = fieldDefinitions.get(key);
-          if (definition) {
-            result[key] = this.transform(value, definition.name);
+          if (key.startsWith('__')) {
+            // eslint-disable-next-line no-continue
+            continue;
           }
+          const definition = fields.get(key);
+          if (!definition) {
+            throw new Error(`Field ${key} not found in type ${type}`);
+          }
+          result[key] = this.transform(value, definition.name);
         }
         return result;
       }
