@@ -1,0 +1,31 @@
+scalar DateTime
+scalar CalendarDate
+
+interface WrittenWork {
+    id: ID!
+    title: String!
+}
+
+type Book implements WrittenWork {
+    id: ID!
+    title: String!
+    published: CalendarDate!
+}
+
+type BlogArticle implements WrittenWork {
+    id: ID!
+    title: String!
+    publishedDate: DateTime!
+}
+
+type Author {
+    id: ID!
+    dateOfBirth: CalendarDate!
+    books: [Book!]!
+    blogArticles: [BlogArticle!]!
+    writtenWorks: [WrittenWork!]!
+}
+
+type Query {
+    authors: [Author!]!
+}

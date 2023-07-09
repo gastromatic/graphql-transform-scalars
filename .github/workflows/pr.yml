@@ -34,3 +34,25 @@ jobs:
         run: yarn run format
       - name: Lint
         run: yarn run lint
+
+  test-with-node:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [ 16, 18, 20 ]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v3.7.0
+        with:
+          node-version: ${{ matrix.node-version }}
+      - uses: actions/cache@v3
+        with:
+          path: '**/node_modules'
+          key: ${{ runner.os }}-node-${{ matrix.node-version }}-modules-${{ hashFiles('**/yarn.lock') }}
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile --ignore-engines
+      - name: Graphql code generation
+        run: yarn graphql:test:generate
+      - name: Run Tests
+        run: yarn test

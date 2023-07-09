@@ -1,14 +1,8 @@
 {
+  "extends": "./tsconfig.build.json",
   "compilerOptions": {
-    "target": "es2020",
-    "module": "commonjs",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "outDir": "dist",
-    "declaration": true,
-    "baseUrl": "."
-  },
-  "include": ["src/**/*"]
+    "paths": {
+      "graphql-transform-scalars": ["src"]
+    }
+  }
 }
