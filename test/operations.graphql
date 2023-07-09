@@ -1,0 +1,28 @@
+query GetAuthors {
+    authors {
+        id
+        dateOfBirth
+        books {
+            id
+            title
+            published
+        }
+    }
+}
+
+query GetAuthorsWithWrittenWorks {
+    authors {
+        id
+        dateOfBirth
+        writtenWorks {
+            id
+            title
+            ... on Book {
+                published
+            }
+            ... on BlogArticle {
+                publishedDate
+            }
+        }
+    }
+}

@@ -1,0 +1,23 @@
+schema: "./test/schema.graphql"
+documents: './test/operations.graphql'
+hooks:
+  afterAllFileWrite:
+    - npm run format:fix
+generates:
+  test/operations.generated.ts:
+    config:
+      preResolveTypes: true
+      namingConvention:
+        enumValues: "change-case#upperCase"
+        typeNames: "keep"
+      scalars:
+        ID: string
+        CalendarDate: CalendarDate
+        DateTime: Date
+    plugins:
+      - typescript
+      - typescript-graphql-request
+      - typescript-operations
+      - add:
+          content:
+            - 'import { CalendarDate } from "calendar-date";'

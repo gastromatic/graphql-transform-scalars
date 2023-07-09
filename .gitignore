@@ -4,3 +4,4 @@ coverage/
 temp/
 .idea/
 .vscode/
+*.generated.*
