@@ -1,6 +1,6 @@
 # graphql-transform-scalars
 
-Automatically transform custom graphql scalars to your desired type.
+Transform the response of your graphql request with mapper functions for your custom scalar types.
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![npm version](https://badge.fury.io/js/graphql-transform-scalars.svg)](https://badge.fury.io/js/graphql-transform-scalars)
@@ -28,6 +28,7 @@ import { CalendarDate } from 'calendar-date';
 import { getSdkWrapper, TransformCustomScalars } from 'graphql-transform-scalars';
 import { getSdk } from './generated/graphql';
 
+// The base schema is needed to get the Information about the graphql types returned from your request.
 const schema = fs.readFileSync('path/to/your/schema.graphql', 'utf8');
 const transformScalars = new TransformCustomScalars(schema, {
     // Custom transformers
