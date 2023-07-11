@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { FieldTypeDefinition, getSchemaDefinition, TypeDefinition } from './getSchemaDefinition';
+import { GraphQLScalarType } from 'graphql/type';
 
 type StringTransformerFunction = (value: string) => any;
 type BooleanTransformerFunction = (value: boolean) => any;
@@ -10,7 +11,7 @@ export type TransformFunctionType =
   | NumberTransformerFunction;
 
 export class TransformCustomScalars {
-  private readonly transformDefinitions: Record<string, TransformFunctionType>;
+  private readonly transformDefinitions: Record<string, Pick<GraphQLScalarType, 'parseValue'>>;
 
   private readonly queries: Map<string, FieldTypeDefinition>;
 
@@ -18,8 +19,14 @@ export class TransformCustomScalars {
 
   private readonly typeDefinitions: Map<string, TypeDefinition>;
 
-  constructor(schema: string, transformDefinitions: Record<string, TransformFunctionType>) {
-    this.transformDefinitions = transformDefinitions;
+  constructor(
+    schema: string,
+    transformDefinitions: Pick<GraphQLScalarType, 'name' | 'parseValue'>[],
+  ) {
+    this.transformDefinitions = {};
+    for (const transformDefinition of transformDefinitions) {
+      this.transformDefinitions[transformDefinition.name] = transformDefinition;
+    }
     const schemaDefinition = getSchemaDefinition(schema);
     this.queries = schemaDefinition.queries;
     this.mutations = schemaDefinition.mutations;
@@ -85,7 +92,7 @@ export class TransformCustomScalars {
       }
       const transformDefinition = this.transformDefinitions[type];
       if (transformDefinition) {
-        return (transformDefinition as (value: string | number | boolean) => any)(result);
+        return transformDefinition.parseValue(result);
       }
     }
     return result;
