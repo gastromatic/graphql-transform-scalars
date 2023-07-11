@@ -8,9 +8,9 @@ describe('Tranform custom scalars according to supplied mappers', () => {
   test('Base query', async () => {
     // Arrange
     const schema = fs.readFileSync('./test/schema.graphql', 'utf8');
-    const transformScalars = new TransformCustomScalars(schema, {
-      CalendarDate: (val: string) => new CalendarDate(val),
-    });
+    const transformScalars = new TransformCustomScalars(schema, [
+      { name: 'CalendarDate', parseValue: (val: unknown) => new CalendarDate(val as string) },
+    ]);
     const graphqlRequest = new GraphQLClient('');
     graphqlRequest.request = jest.fn().mockResolvedValue({
       authors: [
@@ -57,10 +57,10 @@ describe('Tranform custom scalars according to supplied mappers', () => {
   test('Query of an interface', async () => {
     // Arrange
     const schema = fs.readFileSync('./test/schema.graphql', 'utf8');
-    const transformScalars = new TransformCustomScalars(schema, {
-      CalendarDate: (val: string) => new CalendarDate(val),
-      DateTime: (val: string) => new Date(val),
-    });
+    const transformScalars = new TransformCustomScalars(schema, [
+      { name: 'CalendarDate', parseValue: (val: unknown) => new CalendarDate(val as string) },
+      { name: 'DateTime', parseValue: (val: unknown) => new Date(val as string) },
+    ]);
     const graphqlRequest = new GraphQLClient('');
     graphqlRequest.request = jest.fn().mockResolvedValue({
       authors: [
