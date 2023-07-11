@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/gastromatic/graphql-transform-scalars/compare/v1.1.0...v1.2.0) (2023-07-11)
+
+
+### Features
+
+* change mapper input to accept array of GraphqlScalar definitions ([c61350f](https://github.com/gastromatic/graphql-transform-scalars/commit/c61350f020eae1febb18c14c503341b33b8b7b5b))
+
 # [1.1.0](https://github.com/gastromatic/graphql-transform-scalars/compare/v1.0.0...v1.1.0) (2023-07-07)
 
 
