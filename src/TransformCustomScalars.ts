@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { FieldTypeDefinition, getSchemaDefinition, TypeDefinition } from './getSchemaDefinition';
 
 type StringTransformerFunction = (value: string) => any;
