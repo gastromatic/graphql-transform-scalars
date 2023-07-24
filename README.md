@@ -56,7 +56,7 @@ import { GraphQLError, GraphQLScalarType, Kind } from 'graphql';
 import { CalendarDate } from 'calendar-date';
 
 export const GraphQLCalendarDate: GraphQLScalarType = new GraphQLScalarType({
-name: 'CalendarDate',
+    name: 'CalendarDate',
 
     description:
     'A field representing a date without time information according to ISO 8601. E.g. "2020-01-01".',
