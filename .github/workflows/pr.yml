@@ -6,7 +6,7 @@ jobs:
   commit-lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Commit Lint
@@ -19,7 +19,7 @@ jobs:
   code-lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Setup Node.js environment
         uses: actions/setup-node@v3.8.1
         with:
@@ -41,7 +41,7 @@ jobs:
       matrix:
         node-version: [ 16, 18, 20 ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Setup Node.js environment
         uses: actions/setup-node@v3.8.1
         with:
