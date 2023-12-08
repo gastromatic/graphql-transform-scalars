@@ -68,12 +68,12 @@ export class TransformCustomScalars {
     type: string,
   ): any {
     if (result) {
+      if (Array.isArray(result)) {
+        return result.map((item) => this.transform(item, type));
+      }
       const transformDefinition = this.transformDefinitions[type];
       if (transformDefinition) {
         return transformDefinition.parseValue(result);
-      }
-      if (Array.isArray(result)) {
-        return result.map((item) => this.transform(item, type));
       }
       if (typeof result === 'object') {
         const fieldDefinitions = this.typeDefinitions.get(type);
