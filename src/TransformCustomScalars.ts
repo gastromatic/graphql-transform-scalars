@@ -71,6 +71,10 @@ export class TransformCustomScalars {
       if (Array.isArray(result)) {
         return result.map((item) => this.transform(item, type));
       }
+      const transformDefinition = this.transformDefinitions[type];
+      if (transformDefinition) {
+        return transformDefinition.parseValue(result);
+      }
       if (typeof result === 'object') {
         const fieldDefinitions = this.typeDefinitions.get(type);
         if (!fieldDefinitions) {
@@ -89,10 +93,6 @@ export class TransformCustomScalars {
           result[key] = this.transform(value, definition.name);
         }
         return result;
-      }
-      const transformDefinition = this.transformDefinitions[type];
-      if (transformDefinition) {
-        return transformDefinition.parseValue(result);
       }
     }
     return result;
