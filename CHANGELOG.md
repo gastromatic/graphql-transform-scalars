@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/gastromatic/graphql-transform-scalars/compare/v1.2.0...v1.2.1) (2024-02-06)
+
+
+### Bug Fixes
+
+* scalar not transformed for object ([#51](https://github.com/gastromatic/graphql-transform-scalars/issues/51)) ([7fefdc7](https://github.com/gastromatic/graphql-transform-scalars/commit/7fefdc75ac86d8254e0bcb796c5cef6d905a2e30))
+
 # [1.2.0](https://github.com/gastromatic/graphql-transform-scalars/compare/v1.1.0...v1.2.0) (2023-07-11)
 
 
