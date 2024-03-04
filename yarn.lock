@@ -3318,10 +3318,10 @@ extract-files@^11.0.0:
   resolved "https://registry.yarnpkg.com/extract-files/-/extract-files-11.0.0.tgz#b72d428712f787eef1f5193aff8ab5351ca8469a"
   integrity sha512-FuoE1qtbJ4bBVvv94CC7s0oTnKUGvQs+Rjf1L2SJFfS+HTVVjhPFtehPdQ0JiGPqVNfSSZvL5yzHHQq2Z4WNhQ==
 
-fast-check@3.15.1:
-  version "3.15.1"
-  resolved "https://registry.yarnpkg.com/fast-check/-/fast-check-3.15.1.tgz#36fae8176ac00e470b59e30c0aefa3b0aa432d61"
-  integrity sha512-GutOXZ+SCxGaFWfHe0Pbeq8PrkpGtPxA9/hdkI3s9YzqeMlrq5RdJ+QfYZ/S93jMX+tAyqgW0z5c9ppD+vkGUw==
+fast-check@3.16.0:
+  version "3.16.0"
+  resolved "https://registry.yarnpkg.com/fast-check/-/fast-check-3.16.0.tgz#798fa85212dbfb9e4fdc65b12d872225a8f1c907"
+  integrity sha512-k8GtQHi4pJoRQ1gVDFQno+/FVkowo/ehiz/aCj9O/D7HRWb1sSFzNrw+iPVU8QlWtH+jNwbuN+dDVg3QkS56DQ==
   dependencies:
     pure-rand "^6.0.0"
 
