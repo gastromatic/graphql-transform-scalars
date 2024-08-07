@@ -1,3 +1,15 @@
+# [2.0.0](https://github.com/gastromatic/graphql-transform-scalars/compare/v1.2.1...v2.0.0) (2024-08-07)
+
+
+### Features
+
+* add support for aliases in operations ([f1ab3e6](https://github.com/gastromatic/graphql-transform-scalars/commit/f1ab3e6519c7b09be7a7bd16ded55d3a56c69b00))
+
+
+### BREAKING CHANGES
+
+* add support for aliases in operations
+
 ## [1.2.1](https://github.com/gastromatic/graphql-transform-scalars/compare/v1.2.0...v1.2.1) (2024-02-06)
 
 
