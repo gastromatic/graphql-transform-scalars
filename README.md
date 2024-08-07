@@ -42,7 +42,13 @@ const customScalarDefinitions = [
 
 // The base schema is needed to get the Information about the graphql types returned from your request.
 const schema = fs.readFileSync('path/to/your/schema.graphql', 'utf8');
-const transformScalars = new TransformCustomScalars(schema, customScalarDefinitions);
+// The operations are needed to match field aliases used in operations to the types in the schema.
+const operations = fs.readFileSync('path/to/your/operations.graphql', 'utf8');
+const transformScalars = new TransformCustomScalars({
+    transformDefinitions: customScalarDefinitions,
+    schema,
+    operations
+});
 const sdk = getSdk(new GraphQLClient('url'), getSdkWrapper(this.transformScalars));
 ```
 

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { FieldTypeDefinition, getSchemaDefinition, TypeDefinition } from './getSchemaDefinition';
 import { GraphQLScalarType } from 'graphql/type';
+import { getOperationFieldAliasMapping } from './getOperationFieldAliasMapping';
 
 type StringTransformerFunction = (value: string) => any;
 type BooleanTransformerFunction = (value: boolean) => any;
@@ -19,18 +20,22 @@ export class TransformCustomScalars {
 
   private readonly typeDefinitions: Map<string, TypeDefinition>;
 
-  constructor(
-    schema: string,
-    transformDefinitions: Pick<GraphQLScalarType, 'name' | 'parseValue'>[],
-  ) {
+  private readonly fieldNameByAliasPath: Map<string, string>;
+
+  constructor(args: {
+    schema: string;
+    operations: string;
+    transformDefinitions: Pick<GraphQLScalarType, 'name' | 'parseValue'>[];
+  }) {
     this.transformDefinitions = {};
-    for (const transformDefinition of transformDefinitions) {
+    for (const transformDefinition of args.transformDefinitions) {
       this.transformDefinitions[transformDefinition.name] = transformDefinition;
     }
-    const schemaDefinition = getSchemaDefinition(schema);
+    const schemaDefinition = getSchemaDefinition(args.schema);
     this.queries = schemaDefinition.queries;
     this.mutations = schemaDefinition.mutations;
     this.typeDefinitions = schemaDefinition.typeDefinitions;
+    this.fieldNameByAliasPath = getOperationFieldAliasMapping(args.operations).fieldNameByAliasPath;
   }
 
   private getFields(
@@ -66,10 +71,11 @@ export class TransformCustomScalars {
   private transform(
     result: Record<string, any> | Record<string, any>[] | string | number | boolean | null,
     type: string,
+    path: string,
   ): any {
     if (result) {
       if (Array.isArray(result)) {
-        return result.map((item) => this.transform(item, type));
+        return result.map((item) => this.transform(item, type, path));
       }
       const transformDefinition = this.transformDefinitions[type];
       if (transformDefinition) {
@@ -86,11 +92,12 @@ export class TransformCustomScalars {
             // eslint-disable-next-line no-continue
             continue;
           }
-          const definition = fields.get(key);
+          const fieldKeyWithoutAlias = this.fieldNameByAliasPath.get(`${path}.${key}`) ?? key;
+          const definition = fields.get(fieldKeyWithoutAlias);
           if (!definition) {
-            throw new Error(`Field ${key} not found in type ${type}`);
+            throw new Error(`Field ${fieldKeyWithoutAlias} not found in type ${type}`);
           }
-          result[key] = this.transform(value, definition.name);
+          result[key] = this.transform(value, definition.name, `${path}.${key}`);
         }
         return result;
       }
@@ -111,7 +118,7 @@ export class TransformCustomScalars {
         if (!query) {
           throw new Error(`Query ${key} not found`);
         }
-        (parsedValue as any)[key] = this.transform(value, query.name);
+        (parsedValue as any)[key] = this.transform(value, query.name, key);
       }
     } else {
       for (const [key, value] of Object.entries(parsedValue)) {
@@ -119,7 +126,7 @@ export class TransformCustomScalars {
         if (!mutation) {
           throw new Error(`Mutation ${key} not found`);
         }
-        (parsedValue as any)[key] = this.transform(value, mutation.name);
+        (parsedValue as any)[key] = this.transform(value, mutation.name, key);
       }
     }
     return parsedValue;

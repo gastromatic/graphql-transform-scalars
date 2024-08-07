@@ -13,15 +13,16 @@ query GetAuthors {
 query GetAuthorsWithWrittenWorks {
     authors {
         id
-        dateOfBirth
+        authorDateOfBirth: dateOfBirth
         writtenWorks {
             id
-            title
             ... on Book {
                 published
+                bookTitle: title
             }
             ... on BlogArticle {
                 publishedDate
+                blogTitle: title
             }
         }
     }

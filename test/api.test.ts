@@ -1,16 +1,21 @@
 import { CalendarDate } from 'calendar-date';
-import { TransformCustomScalars, getSdkWrapper } from 'graphql-transform-scalars';
+import { getSdkWrapper, TransformCustomScalars } from 'graphql-transform-scalars';
 import fs from 'fs';
 import { getSdk } from './operations.generated';
 import { GraphQLClient } from 'graphql-request';
 
-describe('Tranform custom scalars according to supplied mappers', () => {
+describe('Transform custom scalars according to supplied mappers', () => {
   test('Base query', async () => {
     // Arrange
     const schema = fs.readFileSync('./test/schema.graphql', 'utf8');
-    const transformScalars = new TransformCustomScalars(schema, [
-      { name: 'CalendarDate', parseValue: (val: unknown) => new CalendarDate(val as string) },
-    ]);
+    const operations = fs.readFileSync('./test/operations.graphql', 'utf8');
+    const transformScalars = new TransformCustomScalars({
+      schema,
+      transformDefinitions: [
+        { name: 'CalendarDate', parseValue: (val: unknown) => new CalendarDate(val as string) },
+      ],
+      operations,
+    });
     const graphqlRequest = new GraphQLClient('');
     graphqlRequest.request = jest.fn().mockResolvedValue({
       authors: [
@@ -57,27 +62,32 @@ describe('Tranform custom scalars according to supplied mappers', () => {
   test('Query of an interface', async () => {
     // Arrange
     const schema = fs.readFileSync('./test/schema.graphql', 'utf8');
-    const transformScalars = new TransformCustomScalars(schema, [
-      { name: 'CalendarDate', parseValue: (val: unknown) => new CalendarDate(val as string) },
-      { name: 'DateTime', parseValue: (val: unknown) => new Date(val as string) },
-    ]);
+    const operations = fs.readFileSync('./test/operations.graphql', 'utf8');
+    const transformScalars = new TransformCustomScalars({
+      schema,
+      transformDefinitions: [
+        { name: 'CalendarDate', parseValue: (val: unknown) => new CalendarDate(val as string) },
+        { name: 'DateTime', parseValue: (val: unknown) => new Date(val as string) },
+      ],
+      operations,
+    });
     const graphqlRequest = new GraphQLClient('');
     graphqlRequest.request = jest.fn().mockResolvedValue({
       authors: [
         {
           id: '1',
-          dateOfBirth: '1960-01-01',
+          authorDateOfBirth: '1960-01-01',
           writtenWorks: [
             {
               __typename: 'Book',
               id: '1',
-              title: 'title 1',
+              bookTitle: 'title 1',
               published: '2022-01-01',
             },
             {
               __typename: 'BlogArticle',
               id: '2',
-              title: 'title 2',
+              blogTitle: 'title 2',
               publishedDate: '2021-10-05T14:48:00.000Z',
             },
           ],
@@ -91,9 +101,9 @@ describe('Tranform custom scalars according to supplied mappers', () => {
 
     // Assert
     const author = result.authors[0];
-    expect(author.dateOfBirth.year).toEqual(1960);
-    expect(author.dateOfBirth.month).toEqual(1);
-    expect(author.dateOfBirth.day).toEqual(1);
+    expect(author.authorDateOfBirth.year).toEqual(1960);
+    expect(author.authorDateOfBirth.month).toEqual(1);
+    expect(author.authorDateOfBirth.day).toEqual(1);
 
     const book = author.writtenWorks[0];
     if (book.__typename !== 'Book') {
