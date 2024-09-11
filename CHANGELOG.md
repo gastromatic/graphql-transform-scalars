@@ -1,3 +1,10 @@
+# [2.1.0](https://github.com/gastromatic/graphql-transform-scalars/compare/v2.0.0...v2.1.0) (2024-09-11)
+
+
+### Features
+
+* support fragments in operations ([#101](https://github.com/gastromatic/graphql-transform-scalars/issues/101)) ([c5b86d1](https://github.com/gastromatic/graphql-transform-scalars/commit/c5b86d12b47cfbca180c378b2f11c1e8e820145a))
+
 # [2.0.0](https://github.com/gastromatic/graphql-transform-scalars/compare/v1.2.1...v2.0.0) (2024-08-07)
 
 
