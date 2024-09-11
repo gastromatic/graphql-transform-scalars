@@ -53,9 +53,7 @@ export function getOperationFieldAliasMapping(schema: string): {
 
   for (const definition of rootNode.definitions) {
     if (definition.kind !== 'OperationDefinition' && definition.kind !== 'FragmentDefinition') {
-      throw new Error(
-        `operation definitions contain non-operation definition of kind ${definition.kind}`,
-      );
+      throw new Error(`Schema contains unsupported definition(s) of kind: ${definition.kind}`);
     }
   }
 
