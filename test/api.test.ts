@@ -170,8 +170,9 @@ describe('Transform custom scalars according to supplied mappers', () => {
     expect(author.books[1].id).toEqual('2');
     expect(author.books[1].bookTitle).toEqual('title 2');
     expect(author.writtenWorks[0].id).toEqual('3');
-    if (author.writtenWorks[0].__typename === 'BlogArticle') {
-      expect(author.writtenWorks[0].blogDate.getFullYear()).toEqual(2022);
+    if (author.writtenWorks[0].__typename !== 'BlogArticle') {
+      throw new Error('Unexpected type');
     }
+    expect(author.writtenWorks[0].blogDate.getFullYear()).toEqual(2022);
   });
 });

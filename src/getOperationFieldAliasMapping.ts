@@ -49,31 +49,34 @@ function setSelectionSetAliases({
 export function getOperationFieldAliasMapping(schema: string): {
   fieldNameByAliasPath: Map<string, string>;
 } {
-  const fieldNameByAliasPath = new Map<string, string>();
-  const fragmentFieldNameByAlias = new Map<string, Map<string, string>>();
   const rootNode = parse(schema);
-  for (const definition of rootNode.definitions) {
-    if (definition.kind === 'FragmentDefinition') {
-      const fragmentAliases = new Map<string, string>();
-      setSelectionSetAliases({
-        fieldNameByAliasPath: fragmentAliases,
-        fragmentFieldNameByAlias,
-        selectionSet: definition.selectionSet,
-        currentPath: '',
-      });
-      fragmentFieldNameByAlias.set(definition.name.value, fragmentAliases);
-    } else if (definition.kind === 'OperationDefinition') {
-      setSelectionSetAliases({
-        fieldNameByAliasPath,
-        fragmentFieldNameByAlias,
-        selectionSet: definition.selectionSet,
-        currentPath: '',
-      });
-    } else {
-      throw new Error(
-        `operation definitions contain non-operation definition of kind ${definition.kind}`,
-      );
-    }
+
+  // This is a mapping of alias (nested key) to field name (nested value) mapped by fragment name (key)
+  const fragmentFieldNameByAlias = new Map<string, Map<string, string>>();
+  for (const definition of rootNode.definitions.filter(
+    (def) => def.kind === 'FragmentDefinition',
+  )) {
+    const fragmentAliases = new Map<string, string>();
+    setSelectionSetAliases({
+      fieldNameByAliasPath: fragmentAliases,
+      fragmentFieldNameByAlias,
+      selectionSet: definition.selectionSet,
+      currentPath: '',
+    });
+    fragmentFieldNameByAlias.set(definition.name.value, fragmentAliases);
+  }
+
+  // This maps all operation field names(value) by alias path(key)
+  const fieldNameByAliasPath = new Map<string, string>();
+  for (const definition of rootNode.definitions.filter(
+    (def) => def.kind === 'OperationDefinition',
+  )) {
+    setSelectionSetAliases({
+      fieldNameByAliasPath,
+      fragmentFieldNameByAlias,
+      selectionSet: definition.selectionSet,
+      currentPath: '',
+    });
   }
   return { fieldNameByAliasPath };
 }
