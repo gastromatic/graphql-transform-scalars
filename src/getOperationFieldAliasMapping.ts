@@ -51,6 +51,14 @@ export function getOperationFieldAliasMapping(schema: string): {
 } {
   const rootNode = parse(schema);
 
+  for (const definition of rootNode.definitions) {
+    if (definition.kind !== 'OperationDefinition' && definition.kind !== 'FragmentDefinition') {
+      throw new Error(
+        `operation definitions contain non-operation definition of kind ${definition.kind}`,
+      );
+    }
+  }
+
   // This is a mapping of alias (nested key) to field name (nested value) mapped by fragment name (key)
   const fragmentFieldNameByAlias = new Map<string, Map<string, string>>();
   for (const definition of rootNode.definitions.filter(
