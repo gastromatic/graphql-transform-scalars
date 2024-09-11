@@ -1,3 +1,27 @@
+fragment Blog on BlogArticle {
+    title
+    blogDate: publishedDate
+}
+
+fragment AuthorBooks on Author {
+    id
+    books {
+        id
+        bookTitle: title
+    }
+    writtenWorks {
+        id
+        ...Blog
+    }
+}
+
+query GetAuthorsWithBooks {
+    authors {
+        id
+        ...AuthorBooks
+    }
+}
+
 query GetAuthors {
     authors {
         id

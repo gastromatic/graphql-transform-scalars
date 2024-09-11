@@ -120,4 +120,59 @@ describe('Transform custom scalars according to supplied mappers', () => {
     expect(blogArticle.publishedDate.getDate()).toEqual(5);
     expect(blogArticle.publishedDate.getFullYear()).toEqual(2021);
   });
+
+  test('Query using Fragment', async () => {
+    // Arrange
+    const schema = fs.readFileSync('./test/schema.graphql', 'utf8');
+    const operations = fs.readFileSync('./test/operations.graphql', 'utf8');
+    const transformScalars = new TransformCustomScalars({
+      schema,
+      transformDefinitions: [
+        { name: 'DateTime', parseValue: (val: unknown) => new Date(val as string) },
+      ],
+      operations,
+    });
+    const graphqlRequest = new GraphQLClient('');
+    graphqlRequest.request = jest.fn().mockResolvedValue({
+      authors: [
+        {
+          id: '1',
+          books: [
+            {
+              __typename: 'Book',
+              id: '1',
+              bookTitle: 'title 1',
+            },
+            {
+              __typename: 'Book',
+              id: '2',
+              bookTitle: 'title 2',
+            },
+          ],
+          writtenWorks: [
+            {
+              __typename: 'BlogArticle',
+              id: '3',
+              blogDate: '2022-01-01',
+            },
+          ],
+        },
+      ],
+    });
+    const sdk = getSdk(graphqlRequest, getSdkWrapper(transformScalars));
+
+    // Act
+    const result = await sdk.GetAuthorsWithBooks();
+    // Assert
+    const author = result.authors[0];
+    expect(author.books[0].id).toEqual('1');
+    expect(author.books[0].bookTitle).toEqual('title 1');
+    expect(author.books[1].id).toEqual('2');
+    expect(author.books[1].bookTitle).toEqual('title 2');
+    expect(author.writtenWorks[0].id).toEqual('3');
+    if (author.writtenWorks[0].__typename !== 'BlogArticle') {
+      throw new Error('Unexpected type');
+    }
+    expect(author.writtenWorks[0].blogDate.getFullYear()).toEqual(2022);
+  });
 });
