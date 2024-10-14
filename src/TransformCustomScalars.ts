@@ -26,6 +26,7 @@ export class TransformCustomScalars {
     schema: string;
     operations: string;
     transformDefinitions: Pick<GraphQLScalarType, 'name' | 'parseValue'>[];
+    __skipOperations?: boolean;
   }) {
     this.transformDefinitions = {};
     for (const transformDefinition of args.transformDefinitions) {
@@ -35,7 +36,13 @@ export class TransformCustomScalars {
     this.queries = schemaDefinition.queries;
     this.mutations = schemaDefinition.mutations;
     this.typeDefinitions = schemaDefinition.typeDefinitions;
-    this.fieldNameByAliasPath = getOperationFieldAliasMapping(args.operations).fieldNameByAliasPath;
+    if (args.__skipOperations) {
+      this.fieldNameByAliasPath = new Map();
+    } else {
+      this.fieldNameByAliasPath = getOperationFieldAliasMapping(
+        args.operations,
+      ).fieldNameByAliasPath;
+    }
   }
 
   private getFields(
