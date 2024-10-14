@@ -10,14 +10,23 @@
       "addLabels": ["devDependencies"],
       "matchDepTypes": ["devDependencies"],
       "matchUpdateTypes": ["minor", "patch"],
-      "automerge": true,
-      "schedule": ["before 8am on Monday"]
+      "automerge": true
     },
     {
       "groupName": "devDependencies",
       "addLabels": ["devDependencies"],
       "matchDepTypes": ["devDependencies"],
       "matchUpdateTypes": ["major"]
+    },
+    {
+      "groupName": "graphql-request",
+      "addLabels": ["graphql-request"],
+      "matchPackageNames": ["graphql-request"]
+    },
+    {
+      "groupName": "eslint",
+      "addLabels": ["eslint"],
+      "matchPackageNames": ["eslint"]
     }
   ],
   "schedule": ["before 8am"]
