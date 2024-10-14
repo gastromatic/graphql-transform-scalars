@@ -1,3 +1,10 @@
+## [2.1.1](https://github.com/gastromatic/graphql-transform-scalars/compare/v2.1.0...v2.1.1) (2024-10-14)
+
+
+### Bug Fixes
+
+* add option to skip operations ([547304f](https://github.com/gastromatic/graphql-transform-scalars/commit/547304fdef2e60307c1de910ea445d850e9d0ab5))
+
 # [2.1.0](https://github.com/gastromatic/graphql-transform-scalars/compare/v2.0.0...v2.1.0) (2024-09-11)
 
 
