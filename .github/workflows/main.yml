@@ -20,7 +20,7 @@ jobs:
       - name: Setup Node.js environment
         uses: actions/setup-node@v4.2.0
         with:
-          node-version: '20'
+          node-version: '22'
       - uses: actions/cache@v4
         with:
           path: '**/node_modules'
@@ -65,7 +65,7 @@ jobs:
       - name: Setup Node.js environment
         uses: actions/setup-node@v4.2.0
         with:
-          node-version: '20'
+          node-version: '22'
       - name: Install dependencies
         run: yarn install --frozen-lockfile
       - name: Build
