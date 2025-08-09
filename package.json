@@ -52,7 +52,7 @@
     "@typescript-eslint/eslint-plugin": "8.39.0",
     "@typescript-eslint/parser": "8.39.0",
     "calendar-date": "2.10.0",
-    "eslint": "8.57.1",
+    "eslint": "9.33.0",
     "fast-check": "4.2.0",
     "graphql": "16.11.0",
     "graphql-request": "6.1.0",
