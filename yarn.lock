@@ -2893,10 +2893,10 @@ busboy@^1.6.0:
   dependencies:
     streamsearch "^1.1.0"
 
-calendar-date@2.10.0:
-  version "2.10.0"
-  resolved "https://registry.yarnpkg.com/calendar-date/-/calendar-date-2.10.0.tgz#c9848d607a1b3af8bf89c3c10b4fda17dd9c18cb"
-  integrity sha512-9+jsHZWkJ4EKtCY5BwEmR2gTNEnK0wDpQBRwlvwUhFjjDNeNfzC4z3XQzZsr7iTHnmO+vK53vCWHJ8sADytbew==
+calendar-date@2.11.0:
+  version "2.11.0"
+  resolved "https://registry.yarnpkg.com/calendar-date/-/calendar-date-2.11.0.tgz#f23d37e5c0a1f68eedcfffc6552133b892fc24a9"
+  integrity sha512-hycvTpUigXB+69BPVKlU6guIZLq9WszvKxWQmzHTc9TIQLedGAcGN6DK5VWSz+sEScUVpAfSmd5t0/B5jwKlcA==
 
 callsites@^3.0.0, callsites@^3.1.0:
   version "3.1.0"
