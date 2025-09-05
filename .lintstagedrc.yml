@@ -1,2 +1,0 @@
-'*.ts': eslint --fix
-'*.{ts,json}': prettier --write
