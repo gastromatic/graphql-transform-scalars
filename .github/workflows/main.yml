@@ -21,10 +21,6 @@ jobs:
         uses: actions/setup-node@v4.4.0
         with:
           node-version: '22'
-      - uses: actions/cache@v4
-        with:
-          path: '**/node_modules'
-          key: ${{ runner.os }}-node-16-modules-${{ hashFiles('**/yarn.lock') }}
       - name: Install dependencies
         run: yarn install --frozen-lockfile
       - name: Format
@@ -36,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [ 16, 18, 20 ]
+        node-version: [ 20, 22 ]
     steps:
       - uses: actions/checkout@v5
       - name: Setup Node.js environment

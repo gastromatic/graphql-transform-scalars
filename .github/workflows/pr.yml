@@ -24,10 +24,6 @@ jobs:
         uses: actions/setup-node@v4.4.0
         with:
           node-version: '22'
-      - uses: actions/cache@v4
-        with:
-          path: '**/node_modules'
-          key: ${{ runner.os }}-node-16-modules-${{ hashFiles('**/yarn.lock') }}
       - name: Install dependencies
         run: yarn install --frozen-lockfile
       - name: Format
