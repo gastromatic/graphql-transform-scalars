@@ -1,3 +1,10 @@
+# [2.2.0](https://github.com/gastromatic/graphql-transform-scalars/compare/v2.1.1...v2.2.0) (2025-10-17)
+
+
+### Features
+
+* add logging option ([3b5f7b0](https://github.com/gastromatic/graphql-transform-scalars/commit/3b5f7b0ef1317057ef62fbe49aa4b5beb1f8604c))
+
 ## [2.1.1](https://github.com/gastromatic/graphql-transform-scalars/compare/v2.1.0...v2.1.1) (2024-10-14)
 
 
