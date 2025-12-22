@@ -4043,10 +4043,10 @@ extract-files@^11.0.0:
   resolved "https://registry.yarnpkg.com/extract-files/-/extract-files-11.0.0.tgz#b72d428712f787eef1f5193aff8ab5351ca8469a"
   integrity sha512-FuoE1qtbJ4bBVvv94CC7s0oTnKUGvQs+Rjf1L2SJFfS+HTVVjhPFtehPdQ0JiGPqVNfSSZvL5yzHHQq2Z4WNhQ==
 
-fast-check@4.5.1:
-  version "4.5.1"
-  resolved "https://registry.yarnpkg.com/fast-check/-/fast-check-4.5.1.tgz#686d3eca1ada3b148eda39c6e50e836f49290938"
-  integrity sha512-G70DBBb8ThD/0dYFfPRHJKxk45JvjiWRZWFWIE41bYwncnZftIsCTV8iKc3+9gUvB6SQ5i4byCK6P/G5RQbH3Q==
+fast-check@4.5.2:
+  version "4.5.2"
+  resolved "https://registry.yarnpkg.com/fast-check/-/fast-check-4.5.2.tgz#04b184f17ce1090d02755f59c43b4b6f12df814c"
+  integrity sha512-tOzL01LMrDIWPLfvMiGUMH0AjqnOelHQPmgvYkW/aRO4Yaw+pBQqWmyebNzAEbKOigoCN8HkRWUZXFkjmiaXMQ==
   dependencies:
     pure-rand "^7.0.0"
 
