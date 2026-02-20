@@ -54,7 +54,7 @@
     "eslint": "8.57.1",
     "fast-check": "4.5.3",
     "graphql": "16.12.0",
-    "graphql-request": "6.1.0",
+    "graphql-request": "7.4.0",
     "jest": "30.2.0",
     "prettier": "3.8.1",
     "rimraf": "6.1.3",
