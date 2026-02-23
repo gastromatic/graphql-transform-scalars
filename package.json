@@ -41,7 +41,7 @@
     "@commitlint/cli": "20.4.2",
     "@commitlint/config-conventional": "20.4.2",
     "@graphql-codegen/add": "6.0.0",
-    "@graphql-codegen/cli": "6.1.1",
+    "@graphql-codegen/cli": "6.1.2",
     "@graphql-codegen/typescript": "5.0.8",
     "@graphql-codegen/typescript-graphql-request": "6.4.0",
     "@graphql-codegen/typescript-operations": "5.0.8",
