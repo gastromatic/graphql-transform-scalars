@@ -1,5 +1,7 @@
 # graphql-transform-scalars
 
+![Library](https://github.com/gastromatic/repo-badges/raw/main/svg/repo-kind/library.svg)
+
 Transform the response of your graphql request with mapper functions for your custom scalar types.
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
