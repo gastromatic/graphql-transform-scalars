@@ -8,14 +8,18 @@ Transform the response of your graphql request with mapper functions for your cu
 [![npm version](https://badge.fury.io/js/graphql-transform-scalars.svg)](https://badge.fury.io/js/graphql-transform-scalars)
 
 ## Installation
-Install with yarn or npm:
+Install with bun, npm or yarn:
 
 ```sh
-yarn add graphql-transform-scalars
+bun add graphql-transform-scalars
 ```
 or
 ```sh
 npm install graphql-transform-scalars
+```
+or
+```sh
+yarn add graphql-transform-scalars
 ```
 
 

@@ -17,7 +17,7 @@ describe('Transform custom scalars according to supplied mappers', () => {
       operations,
     });
     const graphqlRequest = new GraphQLClient('');
-    graphqlRequest.request = jest.fn().mockResolvedValue({
+    graphqlRequest.request = vi.fn().mockResolvedValue({
       authors: [
         {
           id: '1',
@@ -72,7 +72,7 @@ describe('Transform custom scalars according to supplied mappers', () => {
       operations,
     });
     const graphqlRequest = new GraphQLClient('');
-    graphqlRequest.request = jest.fn().mockResolvedValue({
+    graphqlRequest.request = vi.fn().mockResolvedValue({
       authors: [
         {
           id: '1',
@@ -133,7 +133,7 @@ describe('Transform custom scalars according to supplied mappers', () => {
       operations,
     });
     const graphqlRequest = new GraphQLClient('');
-    graphqlRequest.request = jest.fn().mockResolvedValue({
+    graphqlRequest.request = vi.fn().mockResolvedValue({
       authors: [
         {
           id: '1',

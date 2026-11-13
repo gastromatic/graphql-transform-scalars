@@ -6,7 +6,7 @@ jobs:
   commit-lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Commit Lint
@@ -15,40 +15,56 @@ jobs:
         uses: amannn/action-semantic-pull-request@v6.1.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   code-lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - name: Setup Node.js environment
-        uses: actions/setup-node@v6.1.0
+      - uses: actions/checkout@v7
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: '22'
+          bun-version: '1.4.3'
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: bun install --frozen-lockfile
       - name: Format
-        run: yarn run format
+        run: bun run format
       - name: Lint
-        run: yarn run lint
-
+        run: bun run lint
+      - name: Graphql code generation
+        run: bun run graphql:test:generate
+      - name: Type check
+        run: bun run tsc:check
   test-with-node:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [ 18, 20, 22 ]
+        node-version: [ 22, 24, 26 ]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.3'
       - name: Setup Node.js environment
-        uses: actions/setup-node@v6.1.0
+        uses: actions/setup-node@v7.0.0
         with:
           node-version: ${{ matrix.node-version }}
-      - uses: actions/cache@v5
-        with:
-          path: '**/node_modules'
-          key: ${{ runner.os }}-node-${{ matrix.node-version }}-modules-${{ hashFiles('**/yarn.lock') }}
       - name: Install dependencies
-        run: yarn install --frozen-lockfile --ignore-engines
+        run: bun install --frozen-lockfile
       - name: Graphql code generation
-        run: yarn graphql:test:generate
+        run: bun run graphql:test:generate
       - name: Run Tests
-        run: yarn test
+        run: bun run test
+  test-with-bun:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.3'
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Graphql code generation
+        run: bun --bun run graphql:test:generate
+      - name: Run Tests
+        run: bun --bun run test

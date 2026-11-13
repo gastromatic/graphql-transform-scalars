@@ -2,7 +2,7 @@ schema: "./test/schema.graphql"
 documents: './test/operations.graphql'
 hooks:
   afterAllFileWrite:
-    - npm run format:fix
+    - oxfmt
 generates:
   test/operations.generated.ts:
     config:
