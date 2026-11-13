@@ -1,8 +1,13 @@
 {
   "extends": "./tsconfig.build.json",
   "compilerOptions": {
+    "noEmit": true,
+    "declaration": false,
+    "rootDir": ".",
+    "types": ["node", "vitest/globals"],
     "paths": {
-      "graphql-transform-scalars": ["src"]
+      "graphql-transform-scalars": ["./src"]
     }
-  }
+  },
+  "include": ["src/**/*", "test/**/*"]
 }

@@ -1,53 +1,55 @@
 fragment Blog on BlogArticle {
-    title
-    blogDate: publishedDate
+  title
+  blogDate: publishedDate
 }
 
 fragment AuthorBooks on Author {
+  id
+  books {
     id
-    books {
-        id
-        bookTitle: title
-    }
-    writtenWorks {
-        id
-        ...Blog
-    }
+    bookTitle: title
+  }
+  writtenWorks {
+    __typename
+    id
+    ...Blog
+  }
 }
 
 query GetAuthorsWithBooks {
-    authors {
-        id
-        ...AuthorBooks
-    }
+  authors {
+    id
+    ...AuthorBooks
+  }
 }
 
 query GetAuthors {
-    authors {
-        id
-        dateOfBirth
-        books {
-            id
-            title
-            published
-        }
+  authors {
+    id
+    dateOfBirth
+    books {
+      id
+      title
+      published
     }
+  }
 }
 
 query GetAuthorsWithWrittenWorks {
-    authors {
-        id
-        authorDateOfBirth: dateOfBirth
-        writtenWorks {
-            id
-            ... on Book {
-                published
-                bookTitle: title
-            }
-            ... on BlogArticle {
-                publishedDate
-                blogTitle: title
-            }
-        }
+  authors {
+    id
+    authorDateOfBirth: dateOfBirth
+    writtenWorks {
+      __typename
+      id
+      ... on Book {
+        published
+        bookTitle: title
+      }
+      ... on BlogArticle {
+        publishedDate
+        blogTitle: title
+      }
     }
+  }
 }
