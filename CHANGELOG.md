@@ -1,3 +1,10 @@
+# [2.3.0](https://github.com/gastromatic/graphql-transform-scalars/compare/v2.2.0...v2.3.0) (2026-11-14)
+
+
+### Features
+
+* transform falsy scalars and resolve root and nested fragment aliases ([#272](https://github.com/gastromatic/graphql-transform-scalars/issues/272)) ([4070479](https://github.com/gastromatic/graphql-transform-scalars/commit/407047945c70cf05a2828fc63a0c09eb77cb7818))
+
 # [2.2.0](https://github.com/gastromatic/graphql-transform-scalars/compare/v2.1.1...v2.2.0) (2025-10-17)
 
 
