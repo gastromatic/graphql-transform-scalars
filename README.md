@@ -58,6 +58,8 @@ const transformScalars = new TransformCustomScalars({
 const sdk = getSdk(new GraphQLClient('url'), getSdkWrapper(this.transformScalars));
 ```
 
+Select `__typename` on every field that returns a union or an interface. The transformer uses it to find the concrete type: a union result without `__typename` throws an error, and an interface result without it can only contain fields declared on the interface itself.
+
 You can directly pass your defined GraphQLScalarTypes to the TransformCustomScalars constructor. [graphql-scalars](https://github.com/Urigo/graphql-scalars) has a lot of already pre-defined definitions you can use.
 
 <details>
