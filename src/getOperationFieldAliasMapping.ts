@@ -52,6 +52,7 @@ function setSelectionSetAliases({
 
 export function getOperationFieldAliasMapping(schema: string): {
   fieldNameByAliasPath: AliasMapping;
+  fieldNameByAliasPathByOperation: Map<string, AliasMapping>;
 } {
   const rootNode = parse(schema);
 
@@ -90,17 +91,25 @@ export function getOperationFieldAliasMapping(schema: string): {
     return fragmentAliases;
   };
 
-  // Field names by alias path across all operations
+  // Field names by alias path, per named operation and merged across all operations
   const fieldNameByAliasPath: AliasMapping = new Map();
+  const fieldNameByAliasPathByOperation = new Map<string, AliasMapping>();
   for (const definition of rootNode.definitions) {
     if (definition.kind === 'OperationDefinition') {
+      const operationAliases: AliasMapping = new Map();
       setSelectionSetAliases({
-        fieldNameByAliasPath,
+        fieldNameByAliasPath: operationAliases,
         getFragmentAliases,
         selectionSet: definition.selectionSet,
         currentPath: '',
       });
+      for (const [aliasPath, fieldName] of operationAliases) {
+        fieldNameByAliasPath.set(aliasPath, fieldName);
+      }
+      if (definition.name) {
+        fieldNameByAliasPathByOperation.set(definition.name.value, operationAliases);
+      }
     }
   }
-  return { fieldNameByAliasPath };
+  return { fieldNameByAliasPath, fieldNameByAliasPathByOperation };
 }

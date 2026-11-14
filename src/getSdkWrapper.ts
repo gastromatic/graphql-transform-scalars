@@ -10,6 +10,6 @@ export function getSdkWrapper(transformer: TransformCustomScalars) {
     if (!operationType) {
       throw new Error('Operation type is not defined');
     }
-    return transformer.addCustomScalars(res, operationType as 'query' | 'mutation');
+    return transformer.addCustomScalars(res, operationType as 'query' | 'mutation', operationName);
   };
 }

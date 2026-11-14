@@ -1,4 +1,4 @@
-import { TransformCustomScalars } from 'graphql-transform-scalars';
+import { getSdkWrapper, TransformCustomScalars } from 'graphql-transform-scalars';
 
 const schema = `
   scalar Cents
@@ -9,8 +9,14 @@ const schema = `
     prices: [Cents!]!
   }
 
+  type Other {
+    id: ID!
+    label: String
+  }
+
   type Query {
     item: Item
+    other: Other
   }
 
   type Mutation {
@@ -102,5 +108,64 @@ describe('TransformCustomScalars', () => {
     const result = transformer.addCustomScalars({ myItem: { cost: 5 } }, 'query');
 
     expect(result).toEqual({ myItem: { cost: { cents: 5 } } });
+  });
+
+  describe('with aliases of the same response key in several operations', () => {
+    const operations = `
+      mutation UpdateItem {
+        item: updateItem {
+          id
+          price
+        }
+      }
+
+      query GetOther {
+        item: other {
+          id
+          label
+        }
+      }
+
+      query GetItem {
+        item {
+          id
+          price
+        }
+      }
+    `;
+
+    test('resolves aliases of the named operation only', () => {
+      const transformer = createTransformer(operations);
+
+      expect(
+        transformer.addCustomScalars({ item: { id: '1', price: 5 } }, 'query', 'GetItem'),
+      ).toEqual({ item: { id: '1', price: { cents: 5 } } });
+      expect(
+        transformer.addCustomScalars({ item: { id: '1', label: 'a' } }, 'query', 'GetOther'),
+      ).toEqual({ item: { id: '1', label: 'a' } });
+      expect(
+        transformer.addCustomScalars({ item: { id: '1', price: 5 } }, 'mutation', 'UpdateItem'),
+      ).toEqual({ item: { id: '1', price: { cents: 5 } } });
+    });
+
+    test('keeps root fields of the schema without an operation name', () => {
+      const transformer = createTransformer(operations);
+
+      const result = transformer.addCustomScalars({ item: { id: '1', price: 5 } }, 'query');
+
+      expect(result).toEqual({ item: { id: '1', price: { cents: 5 } } });
+    });
+
+    test('passes the operation name from the sdk wrapper', async () => {
+      const sdkWrapper = getSdkWrapper(createTransformer(operations));
+
+      const result = await sdkWrapper(
+        async () => ({ item: { id: '1', price: 5 } }),
+        'GetItem',
+        'query',
+      );
+
+      expect(result).toEqual({ item: { id: '1', price: { cents: 5 } } });
+    });
   });
 });

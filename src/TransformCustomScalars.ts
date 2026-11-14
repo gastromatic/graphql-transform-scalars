@@ -9,6 +9,7 @@ export type TransformFunctionType =
   | StringTransformerFunction
   | BooleanTransformerFunction
   | NumberTransformerFunction;
+type AliasMapping = Map<string, string>;
 type LoggerFunction = (args: { message: string; level: 'info' | 'warn' | 'error' }) => void;
 
 export class TransformCustomScalars {
@@ -20,7 +21,9 @@ export class TransformCustomScalars {
 
   private readonly typeDefinitions: Map<string, TypeDefinition>;
 
-  private readonly fieldNameByAliasPath: Map<string, string>;
+  private readonly fieldNameByAliasPath: AliasMapping;
+
+  private readonly fieldNameByAliasPathByOperation: Map<string, AliasMapping>;
 
   private readonly logger?: LoggerFunction;
 
@@ -54,10 +57,11 @@ export class TransformCustomScalars {
 
     if (args.__skipOperations) {
       this.fieldNameByAliasPath = new Map();
+      this.fieldNameByAliasPathByOperation = new Map();
     } else {
-      this.fieldNameByAliasPath = getOperationFieldAliasMapping(
-        args.operations,
-      ).fieldNameByAliasPath;
+      const aliasMapping = getOperationFieldAliasMapping(args.operations);
+      this.fieldNameByAliasPath = aliasMapping.fieldNameByAliasPath;
+      this.fieldNameByAliasPathByOperation = aliasMapping.fieldNameByAliasPathByOperation;
       this.logger?.({
         message: `Mapped ${this.fieldNameByAliasPath.size} field aliases from operations`,
         level: 'info',
@@ -114,6 +118,7 @@ export class TransformCustomScalars {
     result: Record<string, any> | Record<string, any>[] | string | number | boolean | null,
     type: string,
     path: string,
+    aliases: AliasMapping,
   ): any {
     if (result === null || result === undefined) {
       return result;
@@ -123,7 +128,7 @@ export class TransformCustomScalars {
         message: `Transforming array of ${result.length} items at path: ${path}`,
         level: 'info',
       });
-      return result.map((item) => this.transform(item, type, path));
+      return result.map((item) => this.transform(item, type, path, aliases));
     }
     const transformDefinition = this.transformDefinitions[type];
     if (transformDefinition) {
@@ -146,7 +151,7 @@ export class TransformCustomScalars {
       if (key.startsWith('__')) {
         continue;
       }
-      const fieldKeyWithoutAlias = this.resolveAlias(key, `${path}.${key}`, path);
+      const fieldKeyWithoutAlias = this.resolveAlias(aliases, key, `${path}.${key}`, path);
       const definition = fields.get(fieldKeyWithoutAlias);
       if (!definition) {
         this.logger?.({
@@ -155,13 +160,18 @@ export class TransformCustomScalars {
         });
         throw new Error(`Field ${fieldKeyWithoutAlias} not found in type ${type}`);
       }
-      result[key] = this.transform(value, definition.name, `${path}.${key}`);
+      result[key] = this.transform(value, definition.name, `${path}.${key}`, aliases);
     }
     return result;
   }
 
-  private resolveAlias(key: string, aliasPath: string, parentPath: string): string {
-    const fieldName = this.fieldNameByAliasPath.get(aliasPath) ?? key;
+  private resolveAlias(
+    aliases: AliasMapping,
+    key: string,
+    aliasPath: string,
+    parentPath: string,
+  ): string {
+    const fieldName = aliases.get(aliasPath) ?? key;
     if (fieldName !== key) {
       this.logger?.({
         message: `Resolved alias ${key} to field ${fieldName} at path: ${parentPath}`,
@@ -171,7 +181,15 @@ export class TransformCustomScalars {
     return fieldName;
   }
 
-  addCustomScalars<T>(parsedValue: T, operationType: 'query' | 'mutation'): T {
+  /**
+   * Transforms the custom scalars of an operation result in place. Pass the operation name to
+   * resolve aliases from that operation only; without it, aliases from all operations are used.
+   */
+  addCustomScalars<T>(
+    parsedValue: T,
+    operationType: 'query' | 'mutation',
+    operationName?: string,
+  ): T {
     this.logger?.({
       message: `Starting scalar transformation for ${operationType}`,
       level: 'info',
@@ -190,15 +208,25 @@ export class TransformCustomScalars {
     }
     const rootFields = operationType === 'query' ? this.queries : this.mutations;
     const rootName = operationType === 'query' ? 'Query' : 'Mutation';
+    const operationAliases =
+      operationName === undefined
+        ? undefined
+        : this.fieldNameByAliasPathByOperation.get(operationName);
+    const aliases = operationAliases ?? this.fieldNameByAliasPath;
     for (const [key, value] of Object.entries(parsedValue)) {
       this.logger?.({ message: `Processing ${operationType}: ${key}`, level: 'info' });
-      const fieldName = this.resolveAlias(key, key, operationType);
+      // Without the operation, a root alias from another operation could shadow a root field of
+      // the same name, so root fields are only resolved as aliases when they are not in the schema.
+      const fieldName =
+        operationAliases || !rootFields.has(key)
+          ? this.resolveAlias(aliases, key, key, operationType)
+          : key;
       const rootField = rootFields.get(fieldName);
       if (!rootField) {
         this.logger?.({ message: `${rootName} ${fieldName} not found in schema`, level: 'error' });
         throw new Error(`${rootName} ${fieldName} not found`);
       }
-      (parsedValue as any)[key] = this.transform(value, rootField.name, key);
+      (parsedValue as any)[key] = this.transform(value, rootField.name, key, aliases);
     }
 
     this.logger?.({
