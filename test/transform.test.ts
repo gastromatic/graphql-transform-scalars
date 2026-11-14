@@ -182,11 +182,14 @@ describe('TransformCustomScalars with type conditions', () => {
     interface Work {
       id: ID!
       title: String
+      date: Cents
+      author: Author
     }
 
     type Book implements Work {
       id: ID!
       title: String
+      date: Cents
       published: Cents
       author: Author
     }
@@ -194,6 +197,7 @@ describe('TransformCustomScalars with type conditions', () => {
     type Blog implements Work {
       id: ID!
       title: String
+      date: Cents
       publishedDate: Cents
       author: Author
     }
@@ -378,5 +382,54 @@ describe('TransformCustomScalars with type conditions', () => {
     expect(result).toEqual({
       media: [{ __typename: 'Book', label: 'title', date: { cents: 1 } }],
     });
+  });
+
+  test('resolves aliases of interface fields below a type condition without __typename', () => {
+    const transformer = createTransformer(`
+      query GetWorks {
+        works {
+          ... on Book {
+            day: date
+            author {
+              birthday: born
+            }
+          }
+        }
+      }
+    `);
+
+    const result = transformer.addCustomScalars(
+      { works: [{ day: 1, author: { birthday: 2 } }] },
+      'query',
+      'GetWorks',
+    );
+
+    expect(result).toEqual({ works: [{ day: { cents: 1 }, author: { birthday: { cents: 2 } } }] });
+  });
+
+  test('prefers aliases of later operations without an operation name', () => {
+    const transformer = createTransformer(`
+      query GetTitles {
+        works {
+          detail: title
+        }
+      }
+
+      query GetBookDates {
+        works {
+          __typename
+          ... on Book {
+            detail: published
+          }
+        }
+      }
+    `);
+
+    const result = transformer.addCustomScalars(
+      { works: [{ __typename: 'Book', detail: 1 }] },
+      'query',
+    );
+
+    expect(result).toEqual({ works: [{ __typename: 'Book', detail: { cents: 1 } }] });
   });
 });

@@ -179,11 +179,13 @@ export class TransformCustomScalars {
     parentPath: string,
     typeNames: string[],
   ): string {
-    const entry = aliases
-      .get(aliasPath)
-      ?.find((aliasEntry) =>
+    // The last matching alias wins, so with aliases merged across operations later ones take
+    // precedence
+    const entry = [...(aliases.get(aliasPath) ?? [])]
+      .reverse()
+      .find((aliasEntry) =>
         aliasEntry.typeConditions.every((conditions, level) =>
-          conditions.every((condition) => this.satisfiesTypeCondition(typeNames[level], condition)),
+          conditions.every((condition) => this.mayMatchTypeCondition(typeNames[level], condition)),
         ),
       );
     const fieldName = entry?.fieldName ?? key;
@@ -196,20 +198,31 @@ export class TransformCustomScalars {
     return fieldName;
   }
 
-  /** Whether an object of the given type is selected by `... on typeCondition` */
-  private satisfiesTypeCondition(typeName: string | undefined, typeCondition: string): boolean {
+  /**
+   * Whether an object of the given type can be selected by `... on typeCondition`. For an interface
+   * result without `__typename` the concrete type is unknown, so any condition that overlaps with
+   * the interface matches.
+   */
+  private mayMatchTypeCondition(typeName: string | undefined, typeCondition: string): boolean {
     if (typeName === undefined) {
       return false;
     }
-    if (typeName === typeCondition) {
+    const conditionTypes = this.getPossibleTypes(typeCondition);
+    if (typeName === typeCondition || conditionTypes.includes(typeName)) {
       return true;
     }
-    const conditionType = this.typeDefinitions.get(typeCondition);
-    return (
-      conditionType !== undefined &&
-      conditionType.kind !== 'ObjectTypeDefinition' &&
-      conditionType.types.includes(typeName)
-    );
+    if (this.typeDefinitions.get(typeName)?.kind === 'ObjectTypeDefinition') {
+      return false;
+    }
+    return this.getPossibleTypes(typeName).some((type) => conditionTypes.includes(type));
+  }
+
+  private getPossibleTypes(typeName: string): string[] {
+    const typeDefinition = this.typeDefinitions.get(typeName);
+    if (!typeDefinition) {
+      return [];
+    }
+    return typeDefinition.kind === 'ObjectTypeDefinition' ? [typeName] : typeDefinition.types;
   }
 
   /**
