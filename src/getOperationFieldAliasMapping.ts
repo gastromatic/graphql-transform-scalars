@@ -1,27 +1,33 @@
-import { parse, SelectionSetNode } from 'graphql/index';
+import { FragmentDefinitionNode, parse, SelectionSetNode } from 'graphql';
+
+type AliasMapping = Map<string, string>;
+
+function joinPath(parentPath: string, key: string): string {
+  return parentPath ? `${parentPath}.${key}` : key;
+}
 
 function setSelectionSetAliases({
   fieldNameByAliasPath,
-  fragmentFieldNameByAlias,
+  getFragmentAliases,
   selectionSet,
   currentPath,
 }: {
-  fieldNameByAliasPath: Map<string, string>;
-  fragmentFieldNameByAlias: Map<string, Map<string, string>>;
+  fieldNameByAliasPath: AliasMapping;
+  getFragmentAliases: (fragmentName: string) => AliasMapping | undefined;
   selectionSet: SelectionSetNode;
   currentPath: string;
 }): void {
   for (const selection of selectionSet.selections) {
     if (selection.kind === 'Field') {
       const aliasOrName = selection.alias?.value ?? selection.name.value;
-      const path = currentPath ? `${currentPath}.${aliasOrName}` : aliasOrName;
+      const path = joinPath(currentPath, aliasOrName);
       if (selection.alias) {
         fieldNameByAliasPath.set(path, selection.name.value);
       }
       if (selection.selectionSet) {
         setSelectionSetAliases({
           fieldNameByAliasPath,
-          fragmentFieldNameByAlias,
+          getFragmentAliases,
           selectionSet: selection.selectionSet,
           currentPath: path,
         });
@@ -30,59 +36,71 @@ function setSelectionSetAliases({
     if (selection.kind === 'InlineFragment' && selection.selectionSet) {
       setSelectionSetAliases({
         fieldNameByAliasPath,
-        fragmentFieldNameByAlias,
+        getFragmentAliases,
         selectionSet: selection.selectionSet,
         currentPath,
       });
     }
     if (selection.kind === 'FragmentSpread') {
-      const fragmentAliases = fragmentFieldNameByAlias.get(selection.name.value);
-      if (fragmentAliases) {
-        for (const [alias, fieldName] of fragmentAliases.entries()) {
-          fieldNameByAliasPath.set(`${currentPath}.${alias}`, fieldName);
-        }
+      const fragmentAliases = getFragmentAliases(selection.name.value);
+      for (const [aliasPath, fieldName] of fragmentAliases ?? []) {
+        fieldNameByAliasPath.set(joinPath(currentPath, aliasPath), fieldName);
       }
     }
   }
 }
 
 export function getOperationFieldAliasMapping(schema: string): {
-  fieldNameByAliasPath: Map<string, string>;
+  fieldNameByAliasPath: AliasMapping;
 } {
   const rootNode = parse(schema);
 
+  const fragmentDefinitions = new Map<string, FragmentDefinitionNode>();
   for (const definition of rootNode.definitions) {
-    if (definition.kind !== 'OperationDefinition' && definition.kind !== 'FragmentDefinition') {
+    if (definition.kind === 'FragmentDefinition') {
+      fragmentDefinitions.set(definition.name.value, definition);
+    } else if (definition.kind !== 'OperationDefinition') {
       throw new Error(`Schema contains unsupported definition(s) of kind: ${definition.kind}`);
     }
   }
 
-  // This is a mapping of alias (nested key) to field name (nested value) mapped by fragment name (key)
-  const fragmentFieldNameByAlias = new Map<string, Map<string, string>>();
-  for (const definition of rootNode.definitions.filter(
-    (def) => def.kind === 'FragmentDefinition',
-  )) {
-    const fragmentAliases = new Map<string, string>();
+  // Alias paths relative to the fragment, by fragment name. Fragments are resolved on first use,
+  // so a fragment can spread another fragment that is defined later in the document.
+  const fragmentFieldNameByAlias = new Map<string, AliasMapping>();
+  const fragmentsBeingResolved = new Set<string>();
+  const getFragmentAliases = (fragmentName: string): AliasMapping | undefined => {
+    const resolved = fragmentFieldNameByAlias.get(fragmentName);
+    if (resolved) {
+      return resolved;
+    }
+    const definition = fragmentDefinitions.get(fragmentName);
+    if (!definition || fragmentsBeingResolved.has(fragmentName)) {
+      return undefined;
+    }
+    fragmentsBeingResolved.add(fragmentName);
+    const fragmentAliases: AliasMapping = new Map();
     setSelectionSetAliases({
       fieldNameByAliasPath: fragmentAliases,
-      fragmentFieldNameByAlias,
+      getFragmentAliases,
       selectionSet: definition.selectionSet,
       currentPath: '',
     });
-    fragmentFieldNameByAlias.set(definition.name.value, fragmentAliases);
-  }
+    fragmentsBeingResolved.delete(fragmentName);
+    fragmentFieldNameByAlias.set(fragmentName, fragmentAliases);
+    return fragmentAliases;
+  };
 
-  // This maps all operation field names(value) by alias path(key)
-  const fieldNameByAliasPath = new Map<string, string>();
-  for (const definition of rootNode.definitions.filter(
-    (def) => def.kind === 'OperationDefinition',
-  )) {
-    setSelectionSetAliases({
-      fieldNameByAliasPath,
-      fragmentFieldNameByAlias,
-      selectionSet: definition.selectionSet,
-      currentPath: '',
-    });
+  // Field names by alias path across all operations
+  const fieldNameByAliasPath: AliasMapping = new Map();
+  for (const definition of rootNode.definitions) {
+    if (definition.kind === 'OperationDefinition') {
+      setSelectionSetAliases({
+        fieldNameByAliasPath,
+        getFragmentAliases,
+        selectionSet: definition.selectionSet,
+        currentPath: '',
+      });
+    }
   }
   return { fieldNameByAliasPath };
 }
