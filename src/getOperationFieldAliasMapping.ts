@@ -1,9 +1,24 @@
 import { FragmentDefinitionNode, parse, SelectionSetNode } from 'graphql';
 
-type AliasMapping = Map<string, string>;
+export type AliasEntry = {
+  fieldName: string;
+  /**
+   * Type conditions per object along the alias path: index 0 is the operation (or fragment) root,
+   * the last index is the object that contains the aliased field. An object matches when it
+   * satisfies all conditions of its level.
+   */
+  typeConditions: string[][];
+};
+
+/** Alias entries by alias path, e.g. `authors.writtenWorks.blogTitle` */
+export type AliasMapping = Map<string, AliasEntry[]>;
 
 function joinPath(parentPath: string, key: string): string {
   return parentPath ? `${parentPath}.${key}` : key;
+}
+
+function addAlias(aliases: AliasMapping, path: string, entry: AliasEntry): void {
+  aliases.set(path, [...(aliases.get(path) ?? []), entry]);
 }
 
 function setSelectionSetAliases({
@@ -11,18 +26,22 @@ function setSelectionSetAliases({
   getFragmentAliases,
   selectionSet,
   currentPath,
+  typeConditions,
 }: {
   fieldNameByAliasPath: AliasMapping;
   getFragmentAliases: (fragmentName: string) => AliasMapping | undefined;
   selectionSet: SelectionSetNode;
   currentPath: string;
+  typeConditions: string[][];
 }): void {
+  const parentConditions = typeConditions.slice(0, -1);
+  const currentConditions = typeConditions[typeConditions.length - 1];
   for (const selection of selectionSet.selections) {
     if (selection.kind === 'Field') {
       const aliasOrName = selection.alias?.value ?? selection.name.value;
       const path = joinPath(currentPath, aliasOrName);
       if (selection.alias) {
-        fieldNameByAliasPath.set(path, selection.name.value);
+        addAlias(fieldNameByAliasPath, path, { fieldName: selection.name.value, typeConditions });
       }
       if (selection.selectionSet) {
         setSelectionSetAliases({
@@ -30,21 +49,36 @@ function setSelectionSetAliases({
           getFragmentAliases,
           selectionSet: selection.selectionSet,
           currentPath: path,
+          typeConditions: [...typeConditions, []],
         });
       }
     }
     if (selection.kind === 'InlineFragment' && selection.selectionSet) {
+      const typeCondition = selection.typeCondition?.name.value;
       setSelectionSetAliases({
         fieldNameByAliasPath,
         getFragmentAliases,
         selectionSet: selection.selectionSet,
         currentPath,
+        typeConditions: typeCondition
+          ? [...parentConditions, [...currentConditions, typeCondition]]
+          : typeConditions,
       });
     }
     if (selection.kind === 'FragmentSpread') {
       const fragmentAliases = getFragmentAliases(selection.name.value);
-      for (const [aliasPath, fieldName] of fragmentAliases ?? []) {
-        fieldNameByAliasPath.set(joinPath(currentPath, aliasPath), fieldName);
+      for (const [aliasPath, entries] of fragmentAliases ?? []) {
+        for (const entry of entries) {
+          const [fragmentRootConditions, ...fragmentChildConditions] = entry.typeConditions;
+          addAlias(fieldNameByAliasPath, joinPath(currentPath, aliasPath), {
+            fieldName: entry.fieldName,
+            typeConditions: [
+              ...parentConditions,
+              [...currentConditions, ...fragmentRootConditions],
+              ...fragmentChildConditions,
+            ],
+          });
+        }
       }
     }
   }
@@ -85,6 +119,7 @@ export function getOperationFieldAliasMapping(schema: string): {
       getFragmentAliases,
       selectionSet: definition.selectionSet,
       currentPath: '',
+      typeConditions: [[definition.typeCondition.name.value]],
     });
     fragmentsBeingResolved.delete(fragmentName);
     fragmentFieldNameByAlias.set(fragmentName, fragmentAliases);
@@ -102,9 +137,12 @@ export function getOperationFieldAliasMapping(schema: string): {
         getFragmentAliases,
         selectionSet: definition.selectionSet,
         currentPath: '',
+        typeConditions: [[]],
       });
-      for (const [aliasPath, fieldName] of operationAliases) {
-        fieldNameByAliasPath.set(aliasPath, fieldName);
+      for (const [aliasPath, entries] of operationAliases) {
+        for (const entry of entries) {
+          addAlias(fieldNameByAliasPath, aliasPath, entry);
+        }
       }
       if (definition.name) {
         fieldNameByAliasPathByOperation.set(definition.name.value, operationAliases);

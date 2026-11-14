@@ -169,3 +169,267 @@ describe('TransformCustomScalars', () => {
     });
   });
 });
+
+describe('TransformCustomScalars with type conditions', () => {
+  const schemaWithAbstractTypes = `
+    scalar Cents
+
+    type Author {
+      name: String
+      born: Cents
+    }
+
+    interface Work {
+      id: ID!
+      title: String
+      date: Cents
+      author: Author
+    }
+
+    type Book implements Work {
+      id: ID!
+      title: String
+      date: Cents
+      published: Cents
+      author: Author
+    }
+
+    type Blog implements Work {
+      id: ID!
+      title: String
+      date: Cents
+      publishedDate: Cents
+      author: Author
+    }
+
+    union Media = Book | Blog
+
+    type Query {
+      works: [Work!]!
+      media: [Media!]!
+    }
+  `;
+
+  function createTransformer(operations: string) {
+    return new TransformCustomScalars({
+      schema: schemaWithAbstractTypes,
+      operations,
+      transformDefinitions: [{ name: 'Cents', parseValue: (value: unknown) => ({ cents: value }) }],
+    });
+  }
+
+  test('resolves the same alias to different fields of union members', () => {
+    const transformer = createTransformer(`
+      query {
+        media {
+          __typename
+          ... on Book {
+            date: published
+          }
+          ... on Blog {
+            date: publishedDate
+          }
+        }
+      }
+    `);
+
+    const result = transformer.addCustomScalars(
+      {
+        media: [
+          { __typename: 'Book', date: 1 },
+          { __typename: 'Blog', date: 2 },
+        ],
+      },
+      'query',
+    );
+
+    expect(result).toEqual({
+      media: [
+        { __typename: 'Book', date: { cents: 1 } },
+        { __typename: 'Blog', date: { cents: 2 } },
+      ],
+    });
+  });
+
+  test('resolves the same alias to different fields of interface implementations', () => {
+    const transformer = createTransformer(`
+      query {
+        works {
+          __typename
+          id
+          ... on Book {
+            label: title
+          }
+          ... on Blog {
+            label: publishedDate
+          }
+        }
+      }
+    `);
+
+    const result = transformer.addCustomScalars(
+      {
+        works: [
+          { __typename: 'Book', id: '1', label: 'title' },
+          { __typename: 'Blog', id: '2', label: 3 },
+        ],
+      },
+      'query',
+    );
+
+    expect(result).toEqual({
+      works: [
+        { __typename: 'Book', id: '1', label: 'title' },
+        { __typename: 'Blog', id: '2', label: { cents: 3 } },
+      ],
+    });
+  });
+
+  test('resolves the same alias from named fragments on different types', () => {
+    const transformer = createTransformer(`
+      query {
+        media {
+          __typename
+          ...BookDate
+          ...BlogDate
+        }
+      }
+
+      fragment BookDate on Book {
+        date: published
+      }
+
+      fragment BlogDate on Blog {
+        date: publishedDate
+      }
+    `);
+
+    const result = transformer.addCustomScalars(
+      {
+        media: [
+          { __typename: 'Book', date: 1 },
+          { __typename: 'Blog', date: 2 },
+        ],
+      },
+      'query',
+    );
+
+    expect(result).toEqual({
+      media: [
+        { __typename: 'Book', date: { cents: 1 } },
+        { __typename: 'Blog', date: { cents: 2 } },
+      ],
+    });
+  });
+
+  test('applies type conditions of parent objects to nested aliases', () => {
+    const transformer = createTransformer(`
+      query {
+        media {
+          __typename
+          ... on Book {
+            author {
+              detail: born
+            }
+          }
+          ... on Blog {
+            author {
+              detail: name
+            }
+          }
+        }
+      }
+    `);
+
+    const result = transformer.addCustomScalars(
+      {
+        media: [
+          { __typename: 'Book', author: { detail: 1 } },
+          { __typename: 'Blog', author: { detail: 'name' } },
+        ],
+      },
+      'query',
+    );
+
+    expect(result).toEqual({
+      media: [
+        { __typename: 'Book', author: { detail: { cents: 1 } } },
+        { __typename: 'Blog', author: { detail: 'name' } },
+      ],
+    });
+  });
+
+  test('matches type conditions on interfaces', () => {
+    const transformer = createTransformer(`
+      query {
+        media {
+          __typename
+          ... on Work {
+            label: title
+          }
+          ... on Book {
+            date: published
+          }
+        }
+      }
+    `);
+
+    const result = transformer.addCustomScalars(
+      { media: [{ __typename: 'Book', label: 'title', date: 1 }] },
+      'query',
+    );
+
+    expect(result).toEqual({
+      media: [{ __typename: 'Book', label: 'title', date: { cents: 1 } }],
+    });
+  });
+
+  test('resolves aliases of interface fields below a type condition without __typename', () => {
+    const transformer = createTransformer(`
+      query GetWorks {
+        works {
+          ... on Book {
+            day: date
+            author {
+              birthday: born
+            }
+          }
+        }
+      }
+    `);
+
+    const result = transformer.addCustomScalars(
+      { works: [{ day: 1, author: { birthday: 2 } }] },
+      'query',
+      'GetWorks',
+    );
+
+    expect(result).toEqual({ works: [{ day: { cents: 1 }, author: { birthday: { cents: 2 } } }] });
+  });
+
+  test('prefers aliases of later operations without an operation name', () => {
+    const transformer = createTransformer(`
+      query GetTitles {
+        works {
+          detail: title
+        }
+      }
+
+      query GetBookDates {
+        works {
+          __typename
+          ... on Book {
+            detail: published
+          }
+        }
+      }
+    `);
+
+    const result = transformer.addCustomScalars(
+      { works: [{ __typename: 'Book', detail: 1 }] },
+      'query',
+    );
+
+    expect(result).toEqual({ works: [{ __typename: 'Book', detail: { cents: 1 } }] });
+  });
+});
