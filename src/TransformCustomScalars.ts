@@ -1,6 +1,6 @@
 import { GraphQLScalarType } from 'graphql';
 import { FieldTypeDefinition, getSchemaDefinition, TypeDefinition } from './getSchemaDefinition';
-import { getOperationFieldAliasMapping } from './getOperationFieldAliasMapping';
+import { AliasMapping, getOperationFieldAliasMapping } from './getOperationFieldAliasMapping';
 
 type StringTransformerFunction = (value: string) => any;
 type BooleanTransformerFunction = (value: boolean) => any;
@@ -9,7 +9,6 @@ export type TransformFunctionType =
   | StringTransformerFunction
   | BooleanTransformerFunction
   | NumberTransformerFunction;
-type AliasMapping = Map<string, string>;
 type LoggerFunction = (args: { message: string; level: 'info' | 'warn' | 'error' }) => void;
 
 export class TransformCustomScalars {
@@ -73,7 +72,7 @@ export class TransformCustomScalars {
     obj: any,
     typeDefinition: TypeDefinition,
     type: string,
-  ): Map<string, FieldTypeDefinition> {
+  ): { fields: Map<string, FieldTypeDefinition>; typeName: string } {
     const typeName = obj.__typename;
     if (typeDefinition.kind === 'UnionTypeDefinition') {
       this.logger?.({
@@ -94,7 +93,7 @@ export class TransformCustomScalars {
         this.logger?.({ message: `Type ${typeName} not found in union ${type}`, level: 'error' });
         throw new Error(`Type ${typeName} not found in union ${type}`);
       }
-      return unionTypeDef.fields;
+      return { fields: unionTypeDef.fields, typeName: unionType };
     }
     if (typeDefinition.kind === 'InterfaceTypeDefinition' && typeName) {
       this.logger?.({
@@ -109,9 +108,9 @@ export class TransformCustomScalars {
         });
         throw new Error(`Type ${typeName} not found in interface ${type}`);
       }
-      return interfaceTypeDef.fields;
+      return { fields: interfaceTypeDef.fields, typeName };
     }
-    return typeDefinition.fields;
+    return { fields: typeDefinition.fields, typeName: type };
   }
 
   private transform(
@@ -119,6 +118,7 @@ export class TransformCustomScalars {
     type: string,
     path: string,
     aliases: AliasMapping,
+    parentTypeNames: string[],
   ): any {
     if (result === null || result === undefined) {
       return result;
@@ -128,7 +128,7 @@ export class TransformCustomScalars {
         message: `Transforming array of ${result.length} items at path: ${path}`,
         level: 'info',
       });
-      return result.map((item) => this.transform(item, type, path, aliases));
+      return result.map((item) => this.transform(item, type, path, aliases, parentTypeNames));
     }
     const transformDefinition = this.transformDefinitions[type];
     if (transformDefinition) {
@@ -146,12 +146,19 @@ export class TransformCustomScalars {
       this.logger?.({ message: `Type ${type} not found in type definitions`, level: 'error' });
       throw new Error(`Type ${type} not found`);
     }
-    const fields = this.getFields(result, fieldDefinitions, type);
+    const { fields, typeName } = this.getFields(result, fieldDefinitions, type);
+    const typeNames = [...parentTypeNames, typeName];
     for (const [key, value] of Object.entries(result)) {
       if (key.startsWith('__')) {
         continue;
       }
-      const fieldKeyWithoutAlias = this.resolveAlias(aliases, key, `${path}.${key}`, path);
+      const fieldKeyWithoutAlias = this.resolveAlias(
+        aliases,
+        key,
+        `${path}.${key}`,
+        path,
+        typeNames,
+      );
       const definition = fields.get(fieldKeyWithoutAlias);
       if (!definition) {
         this.logger?.({
@@ -160,7 +167,7 @@ export class TransformCustomScalars {
         });
         throw new Error(`Field ${fieldKeyWithoutAlias} not found in type ${type}`);
       }
-      result[key] = this.transform(value, definition.name, `${path}.${key}`, aliases);
+      result[key] = this.transform(value, definition.name, `${path}.${key}`, aliases, typeNames);
     }
     return result;
   }
@@ -170,8 +177,16 @@ export class TransformCustomScalars {
     key: string,
     aliasPath: string,
     parentPath: string,
+    typeNames: string[],
   ): string {
-    const fieldName = aliases.get(aliasPath) ?? key;
+    const entry = aliases
+      .get(aliasPath)
+      ?.find((aliasEntry) =>
+        aliasEntry.typeConditions.every((conditions, level) =>
+          conditions.every((condition) => this.satisfiesTypeCondition(typeNames[level], condition)),
+        ),
+      );
+    const fieldName = entry?.fieldName ?? key;
     if (fieldName !== key) {
       this.logger?.({
         message: `Resolved alias ${key} to field ${fieldName} at path: ${parentPath}`,
@@ -179,6 +194,22 @@ export class TransformCustomScalars {
       });
     }
     return fieldName;
+  }
+
+  /** Whether an object of the given type is selected by `... on typeCondition` */
+  private satisfiesTypeCondition(typeName: string | undefined, typeCondition: string): boolean {
+    if (typeName === undefined) {
+      return false;
+    }
+    if (typeName === typeCondition) {
+      return true;
+    }
+    const conditionType = this.typeDefinitions.get(typeCondition);
+    return (
+      conditionType !== undefined &&
+      conditionType.kind !== 'ObjectTypeDefinition' &&
+      conditionType.types.includes(typeName)
+    );
   }
 
   /**
@@ -219,14 +250,14 @@ export class TransformCustomScalars {
       // the same name, so root fields are only resolved as aliases when they are not in the schema.
       const fieldName =
         operationAliases || !rootFields.has(key)
-          ? this.resolveAlias(aliases, key, key, operationType)
+          ? this.resolveAlias(aliases, key, key, operationType, [rootName])
           : key;
       const rootField = rootFields.get(fieldName);
       if (!rootField) {
         this.logger?.({ message: `${rootName} ${fieldName} not found in schema`, level: 'error' });
         throw new Error(`${rootName} ${fieldName} not found`);
       }
-      (parsedValue as any)[key] = this.transform(value, rootField.name, key, aliases);
+      (parsedValue as any)[key] = this.transform(value, rootField.name, key, aliases, [rootName]);
     }
 
     this.logger?.({
