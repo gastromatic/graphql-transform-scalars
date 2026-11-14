@@ -1,3 +1,10 @@
+## [2.3.1](https://github.com/gastromatic/graphql-transform-scalars/compare/v2.3.0...v2.3.1) (2026-11-14)
+
+
+### Bug Fixes
+
+* resolve aliases by type condition ([#273](https://github.com/gastromatic/graphql-transform-scalars/issues/273)) ([fcdcd29](https://github.com/gastromatic/graphql-transform-scalars/commit/fcdcd29f020b66a97a2a74fc3376ac568b3db8fc))
+
 # [2.3.0](https://github.com/gastromatic/graphql-transform-scalars/compare/v2.2.0...v2.3.0) (2026-11-14)
 
 
