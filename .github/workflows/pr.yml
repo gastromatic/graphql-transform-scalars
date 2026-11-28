@@ -12,7 +12,7 @@ jobs:
       - name: Commit Lint
         uses: wagoid/commitlint-github-action@v6
       - name: PR Lint
-        uses: amannn/action-semantic-pull-request@v6.1.1
+        uses: amannn/action-semantic-pull-request@v6.1.4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   code-lint:
@@ -22,7 +22,7 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: '1.4.3'
+          bun-version: '1.4.5'
       - name: Install dependencies
         run: bun install --frozen-lockfile
       - name: Format
@@ -43,9 +43,9 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: '1.4.3'
+          bun-version: '1.4.5'
       - name: Setup Node.js environment
-        uses: actions/setup-node@v7.0.0
+        uses: actions/setup-node@v7.1.0
         with:
           node-version: ${{ matrix.node-version }}
       - name: Install dependencies
@@ -61,7 +61,7 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: '1.4.3'
+          bun-version: '1.4.5'
       - name: Install dependencies
         run: bun install --frozen-lockfile
       - name: Graphql code generation
